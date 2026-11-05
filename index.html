@@ -1,0 +1,171 @@
+HTML
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storyaoul Photo Studio</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101522;color:white;font-family:Arial,sans-serif}
+header{text-align:center;padding:24px 12px;background:#19243a}
+header h1{color:#60d9c0;margin:0;font-size:26px}
+header p{color:#b8c5d9}
+main{max-width:700px;margin:auto;padding:18px}
+.panel{background:#1d293e;padding:18px;border-radius:16px;margin-bottom:16px}
+.upload{display:block;text-align:center;border:2px dashed #60d9c0;padding:25px;border-radius:12px;cursor:pointer}
+input[type=file]{display:none}
+canvas{width:100%;height:auto;margin-top:15px;border-radius:10px;background:#080c14}
+label{display:block;margin:17px 0 8px}
+input[type=range]{width:100%;accent-color:#60d9c0}
+.buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+button{background:#30435f;color:white;border:0;padding:13px;border-radius:9px;font-weight:bold;cursor:pointer}
+button:hover{background:#426080}
+.download{background:#08a987;width:100%;margin-top:15px;padding:16px}
+footer{text-align:center;color:#aab6c8;padding:20px}
+</style>
+</head>
+<body>
+<header>
+<h1>Storyaoul Photo Studio</h1>
+<p>Free Online Photo Editing Studio</p>
+</header>
+
+<main>
+<div class="panel">
+<label class="upload" for="photo">
+📸 Upload Your Photo
+<br><br>
+Choose an image from your phone
+</label>
+<input type="file" id="photo" accept="image/*">
+<canvas id="canvas"></canvas>
+</div>
+
+<div class="panel">
+<h3>✨ Photo Adjustments</h3>
+
+<label>Brightness</label>
+<input type="range" id="brightness" min="0" max="200" value="100">
+
+<label>Contrast</label>
+<input type="range" id="contrast" min="0" max="200" value="100">
+
+<label>Saturation</label>
+<input type="range" id="saturation" min="0" max="200" value="100">
+
+<label>Blur</label>
+<input type="range" id="blur" min="0" max="10" value="0">
+</div>
+
+<div class="panel">
+<h3>🎨 Photo Filters</h3>
+<div class="buttons">
+<button onclick="filter('none')">Original</button>
+<button onclick="filter('grayscale(100%)')">Black & White</button>
+<button onclick="filter('sepia(100%)')">Vintage</button>
+<button onclick="filter('contrast(130%) saturate(130%)')">Cinematic</button>
+<button onclick="filter('saturate(180%)')">Vivid</button>
+<button onclick="filter('sepia(40%) contrast(110%)')">Warm</button>
+</div>
+</div>
+
+<div class="panel">
+<h3>🔄 Rotate & Flip</h3>
+<div class="buttons">
+<button onclick="rotate(-90)">↶ Rotate Left</button>
+<button onclick="rotate(90)">↷ Rotate Right</button>
+<button onclick="flip()">↔ Flip</button>
+<button onclick="reset()">Reset All</button>
+</div>
+<button class="download" onclick="download()">⬇ Download Edited Photo</button>
+</div>
+</main>
+
+<footer>© 2026 Storyaoul Photo Studio</footer>
+
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+let img=new Image(),loaded=false,angle=0,flipped=false;
+let chosen='none';
+
+const controls=['brightness','contrast','saturation','blur'];
+
+document.getElementById('photo').addEventListener('change',e=>{
+const file=e.target.files[0];
+if(!file)return;
+if(!file.type.startsWith('image/'))return;
+const url=URL.createObjectURL(file);
+img.onload=()=>{
+loaded=true;
+angle=0;flipped=false;chosen='none';
+controls.forEach(id=>document.getElementById(id).value=
+id==='blur'?0:100);
+draw();
+URL.revokeObjectURL(url);
+};
+img.src=url;
+});
+
+controls.forEach(id=>{
+document.getElementById(id).addEventListener('input',draw);
+});
+
+function filter(value){
+chosen=value;
+draw();
+}
+
+function rotate(value){
+if(!loaded)return;
+angle=(angle+value+360)%360;
+draw();
+}
+
+function flip(){
+if(!loaded)return;
+flipped=!flipped;
+draw();
+}
+
+function reset(){
+if(!loaded)return;
+angle=0;flipped=false;chosen='none';
+controls.forEach(id=>document.getElementById(id).value=
+id==='blur'?0:100);
+draw();
+}
+
+function draw(){
+if(!loaded)return;
+const sideways=angle===90||angle===270;
+canvas.width=sideways?img.height:img.width;
+canvas.height=sideways?img.width:img.height;
+
+ctx.save();
+ctx.translate(canvas.width/2,canvas.height/2);
+ctx.rotate(angle*Math.PI/180);
+ctx.scale(flipped?-1:1,1);
+
+const b=document.getElementById('brightness').value;
+const c=document.getElementById('contrast').value;
+const s=document.getElementById('saturation').value;
+const blur=document.getElementById('blur').value;
+
+ctx.filter=`brightness(${b}%) contrast(${c}%) saturate(${s}%) blur(${blur}px) ${chosen}`;
+ctx.drawImage(img,-img.width/2,-img.height/2);
+ctx.restore();
+}
+
+function download(){
+if(!loaded){alert('Please upload a photo first!');return;}
+const link=document.createElement('a');
+link.download='Storyaoul-Edited-Photo.png';
+link.href=canvas.toDataURL('image/png');
+link.click();
+}
+</script>
+</body>
+</html>
